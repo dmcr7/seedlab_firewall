@@ -123,7 +123,7 @@ Pada machine A lakukan ssh ke machine B :
 
       ssh -D 9000 -C seed@10.0.0.7
 
-parameter -D untuk melakukan port forwarding yang basicnya merubah sshclient menjadi sebuah proxy server (SOCKS) aplikasi protokol yg digunakan untuk mengakses dari remote machine.
+Argumen -D untuk melakukan port forwarding yang basicnya merubah sshclient menjadi sebuah proxy server (SOCKS) aplikasi protokol yg digunakan untuk mengakses dari remote machine.
 
 untuk mengecek nya kita masukan proxy localhost dengan port 9000 pada firefox dan coba akses facebook.com
 
@@ -144,3 +144,44 @@ Kita bisa akses facebook menggunakan proxy SOCK5 dari client B
 ***
 
 #### TASK 4 : Evading Ingress Filtering
+Dalam task ini, kita memakai 2 machine yaitu machine A dan B,
+
+ip machine A : 10.0.0.8
+ip machine B : 10.0.0.7
+
+Machine A melarang machine b melakukan akses ke port 80 dan port 22, nah dalam task ini kita melakukan reverse ssh tunnel dengan machine A ssh ke machine B dan machine B melakukan reverse tunneling ke machine A dan membuat proxy untuk mengakses web server machine A.
+
+![](img/ssh tunneling.png)
+
+kita block dulu machine B ssh dan webserver dalam machine A :
+
+      sudo ufw deny from 10.0.0.7 to any port 22
+      sudo ufw deny from 10.0.0.7 to any port 80
+
+Setelah itu, kita coba ssh machine b ke a dan hasilnya tidak bisa.
+
+nah, sekarang kita akan melakukan reverse ssh tunnel, ssh ke machine B dengan argumen -R
+
+      ssh -R 9000:localhost:22 seed@10.0.0.7
+
+artinya kita membuat tunnel ke machine B dan memforward ssh 9000 ke machine B.
+
+dan pada machine B, kita lakukan reverse ssh tunnel dan memforward ke port 9001
+
+      ssh localhost -p 9000 -D 9001 -C
+
+Port 9000 kita forward ke 9001 dan merubah sshclient menjadi sebuah proxy server(SOCKS)
+
+sebelumnya kita akses web server pada machine B tanpa proxy.
+
+![](img/s9.png)
+
+setelahnya kita masukan proxy ke mozila nya.
+
+![](img/s10.png)
+
+dan kita coba masuk ke web 10.0.0.8 lewat machine B
+
+![](img/s11.png)
+
+Kita berhasil mengakses web server pada machine A
